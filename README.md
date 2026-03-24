@@ -1,50 +1,75 @@
 # boilerplate_project
 
-## Submission package
+## Django App Setup
 
-### 1) Source code
+This project uses a custom Django user model and a music domain app.
 
-- Django models: [music/models.py](music/models.py)
-- Migrations: [music/migrations/0001_initial.py](music/migrations/0001_initial.py)
-- Supporting configuration: [boilerplate_project/settings.py](boilerplate_project/settings.py)
-- Admin CRUD setup: [music/admin.py](music/admin.py)
+### Requirements
 
-### 2) Domain layer implementation
+- Python 3.14+
+- Django installed from `requirements.txt`
 
-Implemented domain entities and constraints from the provided model:
+### 1) Create and activate the virtual environment
 
-- `Library` (one per user)
-- `GenForm` (many per user)
-- `Song` (many per library, optional one-to-one with `GenForm`)
-- `Favorite` (library-song mapping with uniqueness)
-- Enumerations: `Voice` (`male`, `female`) and `Status` (`generating`, `failed`, `ready`)
-- Constraint: `Song.e_rating` must be `"E"` or blank
-
-### 3) ORM and database migrations
-
-- Migration file exists and is committed: [music/migrations/0001_initial.py](music/migrations/0001_initial.py)
-- Database schema applied with:
+If you already have `.venv`, activate it:
 
 ```bash
-/Users/cherio/Documents/boilerplate_project/.venv/bin/python manage.py migrate
+source .venv/bin/activate
 ```
 
-### 4) Evidence of CRUD functionality (real persisted data)
-
-CRUD was demonstrated against SQLite using Django ORM (`manage.py shell`), with create/read/update/delete on core entities.
-
-Command used:
+If you need to create it first:
 
 ```bash
-/Users/cherio/Documents/boilerplate_project/.venv/bin/python manage.py shell -c "from django.contrib.auth import get_user_model; from music.models import Library, GenForm, Song, Favorite, Status, Voice; User=get_user_model(); u,_=User.objects.get_or_create(username='submit_demo_user', defaults={'email':'submit_demo@example.com'}); lib,_=Library.objects.get_or_create(user=u); gf=GenForm.objects.create(user=u,title='Submit Demo',mood_tone='Energetic',genre='Pop',voice=Voice.FEMALE,description='Submission demo'); s=Song.objects.create(library=lib,gen_form=gf,status=Status.GENERATING,e_rating='E',title='Submit Draft'); Favorite.objects.create(library=lib,song=s); print('CREATE_READ', {'gen_forms':GenForm.objects.filter(user=u).count(),'songs':Song.objects.filter(library=lib).count(),'favorites':Favorite.objects.filter(library=lib).count()}); s.status=Status.READY; s.title='Submit Final'; s.save(update_fields=['status','title']); s2=Song.objects.get(pk=s.pk); print('UPDATE', {'status':s2.status,'title':s2.title}); Favorite.objects.filter(library=lib,song=s).delete(); Song.objects.filter(pk=s.pk).delete(); GenForm.objects.filter(pk=gf.pk).delete(); print('DELETE_READ', {'gen_forms':GenForm.objects.filter(user=u).count(),'songs':Song.objects.filter(library=lib).count(),'favorites':Favorite.objects.filter(library=lib).count()})"
+python -m venv .venv
+source .venv/bin/activate
 ```
 
-Observed output:
+### 2) Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3) Apply database migrations
+
+```bash
+python manage.py migrate
+```
+
+### 4) Create an admin user
+
+This project uses a custom user model where `display_name` is the login field and `email` is optional.
+
+```bash
+python manage.py createsuperuser
+```
+
+You will be prompted for:
+- `display_name`
+- `email` if you want to provide one
+- `password`
+
+### 5) Start the development server
+
+```bash
+python manage.py runserver
+```
+
+### 6) Open the admin panel
+
+Visit:
 
 ```text
-CREATE_READ {'gen_forms': 1, 'songs': 1, 'favorites': 1}
-UPDATE {'status': 'ready', 'title': 'Submit Final'}
-DELETE_READ {'gen_forms': 0, 'songs': 0, 'favorites': 0}
+http://127.0.0.1:8000/admin/
 ```
 
-This confirms CRUD operations are working on persisted data.
+### What you can manage in admin
+
+- User: `User ID`, `Display name`, `Email`
+- Gen-form: `Title`, `Mood/Tone`, `Genre`, `Voice`, `Description`
+- Song: `Timestamp`, `Status`, `E-rating`, `Title`
+
+### Notes
+
+- If you change models, run `python manage.py makemigrations` and then `python manage.py migrate`.
+- The project uses the `config` package for settings and URLs.

@@ -50,7 +50,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'boilerplate_project.urls'
+ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
     {
@@ -67,7 +67,9 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'boilerplate_project.wsgi.application'
+WSGI_APPLICATION = 'config.wsgi.application'
+
+AUTH_USER_MODEL = 'music.User'
 
 
 # Database
