@@ -150,6 +150,8 @@ class SunoApiOrgGenerationStrategy(SongGenerationStrategy):
 		
 		if not task_id:
 			raise SongGenerationError("API did not return a taskId.")
+		
+		print(f"DEBUG: Suno API Task Created - taskId: {task_id}")
 
 		# 2. Poll for Status
 		max_attempts = 60  # Max 60 attempts * 5s = 300 seconds (5 minutes)

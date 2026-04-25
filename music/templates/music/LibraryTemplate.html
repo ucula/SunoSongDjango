@@ -20,7 +20,15 @@
             <div class="history-item-info">
                 <h4>{{ song.title }}</h4>
                 <div class="history-item-meta" style="display:flex; align-items:center; gap:12px; margin-top:6px;">
-                    <span class="status-badge status-{{ song.status|lower }}">{{ song.status }}</span>
+                    <span class="status-badge status-{{ song.status|lower }}"
+                          {% if song.status == 'generating' %}
+                          hx-get="{% url 'library-template' %}" 
+                          hx-trigger="every 5s" 
+                          hx-target=".main-content" 
+                          hx-select=".main-content"
+                          {% endif %}>
+                        {{ song.status }}
+                    </span>
                     {% if song.e_rating %}
                     <span class="e-rating-badge">{{ song.e_rating }}</span>
                     {% endif %}
