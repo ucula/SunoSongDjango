@@ -3,7 +3,7 @@ from django.db import transaction
 from music.models import Library, User
 
 
-class UserController:
+class UserViewController:
 	@staticmethod
 	@transaction.atomic
 	def create_user(display_name, email=None, password=None, **extra_fields):

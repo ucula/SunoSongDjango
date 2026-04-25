@@ -13,10 +13,10 @@ class Status(models.TextChoices):
 
 class Song(models.Model):
     library = models.ForeignKey(Library, on_delete=models.CASCADE, related_name="songs")
-    gen_form = models.OneToOneField(
+    gen_form = models.ForeignKey(
         GenForm,
         on_delete=models.SET_NULL,
-        related_name="song",
+        related_name="songs",
         null=True,
         blank=True,
     )

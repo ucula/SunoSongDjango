@@ -4,7 +4,7 @@ from .library import Library
 from .song import Song
 
 
-class Favorite(models.Model):
+class Favourite(models.Model):
     library = models.ForeignKey(Library, on_delete=models.CASCADE, related_name="favorites")
     song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name="favorited_in")
 
@@ -17,4 +17,4 @@ class Favorite(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"Favorite: {self.song}"
+        return f"Favourite: {self.song}"

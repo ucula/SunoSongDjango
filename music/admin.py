@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Favorite, GenForm, Library, Song, User
+from .models import Favourite, GenForm, Library, Song, User
 
 
 @admin.register(User)
@@ -42,10 +42,10 @@ class SongAdmin(admin.ModelAdmin):
 	readonly_fields = ("timestamp",)
 
 
-@admin.register(Favorite)
-class FavoriteAdmin(admin.ModelAdmin):
+@admin.register(Favourite)
+class FavouriteAdmin(admin.ModelAdmin):
 	list_display = ("id", "library", "song")
 	search_fields = ("library__user__display_name", "song__title")
 	fieldsets = (
-		("Favorite", {"fields": ("library", "song")}),
+		("Favourite", {"fields": ("library", "song")}),
 	)

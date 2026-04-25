@@ -1,9 +1,9 @@
 from django.db import transaction
 
-from music.models import Favorite, Library, Song, Status
+from music.models import Favourite, Library, Song, Status
 
 
-class SongController:
+class LibraryViewController:
 	@staticmethod
 	@transaction.atomic
 	def create_song(*, library_id, title, status=Status.GENERATING, e_rating="E", gen_form=None):
@@ -45,11 +45,11 @@ class SongController:
 	@staticmethod
 	@transaction.atomic
 	def add_favorite(library_id, song_id):
-		favorite, _ = Favorite.objects.get_or_create(library_id=library_id, song_id=song_id)
+		favorite, _ = Favourite.objects.get_or_create(library_id=library_id, song_id=song_id)
 		return favorite
 
 	@staticmethod
 	@transaction.atomic
 	def remove_favorite(library_id, song_id):
-		Favorite.objects.filter(library_id=library_id, song_id=song_id).delete()
+		Favourite.objects.filter(library_id=library_id, song_id=song_id).delete()
 		return True

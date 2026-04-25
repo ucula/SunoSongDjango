@@ -1,5 +1,5 @@
-from .generator_views import GeneratorController
-from .song_views import SongController
-from .user_views import UserController
+from .generator_views import GeneratorViewController
+from .song_views import LibraryViewController
+from .user_views import UserViewController
 
-__all__ = ["UserController", "SongController", "GeneratorController"]
+__all__ = ["UserViewController", "LibraryViewController", "GeneratorViewController"]

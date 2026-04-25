@@ -1,4 +1,4 @@
-from .favorite import Favorite
+from .favorite import Favourite
 from .gen_form import GenForm, Voice
 from .library import Library
 from .song import Song, Status
@@ -11,5 +11,5 @@ __all__ = [
     "Library",
     "GenForm",
     "Song",
-    "Favorite",
+    "Favourite",
 ]

@@ -3,7 +3,7 @@ from django.db import transaction
 from music.models import GenForm, Library, Song, Status
 
 
-class GeneratorController:
+class GeneratorViewController:
 	@staticmethod
 	@transaction.atomic
 	def create_gen_form(*, user, title, mood_tone, genre, voice, description):
