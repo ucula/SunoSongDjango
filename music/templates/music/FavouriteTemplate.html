@@ -21,6 +21,11 @@
                     {% endif %}
                     <span class="time" style="color:var(--text-subdued); font-size:0.85rem; display:flex; align-items:center; gap:4px;"><i class="ph ph-calendar-blank"></i> {{ song.timestamp|date:"j M Y" }}</span>
                 </div>
+                {% if song.status == 'failed' and song.error_message %}
+                <div class="error-text" style="color: #ff4c4c; font-size: 0.75rem; margin-top: 4px;">
+                    <i class="ph ph-warning-circle"></i> {{ song.error_message }}
+                </div>
+                {% endif %}
                 {% if song.gen_form %}
                 <div class="history-item-prompt" style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">
                     {{ song.gen_form.genre }} • {{ song.gen_form.mood_tone }} • Voice: {{ song.gen_form.voice }}

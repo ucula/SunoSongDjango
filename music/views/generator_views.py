@@ -152,7 +152,7 @@ class SunoApiOrgGenerationStrategy(SongGenerationStrategy):
 			raise SongGenerationError("API did not return a taskId.")
 
 		# 2. Poll for Status
-		max_attempts = 30  # Max 30 attempts * 5s = 150 seconds
+		max_attempts = 60  # Max 60 attempts * 5s = 300 seconds (5 minutes)
 		for attempt in range(max_attempts):
 			time.sleep(5) # Wait 5 seconds between polls
 			
@@ -179,7 +179,7 @@ class SunoApiOrgGenerationStrategy(SongGenerationStrategy):
 			status_data = poll_data.get("data", {})
 			status = status_data.get("status")
 			
-			if status == "SUCCESS":
+			if status and status.upper() == "SUCCESS":
 				# Extract audio URL
 				response_obj = status_data.get("response", {})
 				data_list = response_obj.get("sunoData", [])
@@ -194,7 +194,7 @@ class SunoApiOrgGenerationStrategy(SongGenerationStrategy):
 					external_id=task_id,
 					audio_url=audio_url,
 				)
-			elif status and "FAILED" in status:
+			elif status and "FAILED" in status.upper():
 				raise SongGenerationError(f"sunoapi.org generation failed: {status}")
 				
 		raise SongGenerationError("Timed out waiting for sunoapi.org generation.")
@@ -211,7 +211,7 @@ def get_generation_strategy(
 	normalized_name = (strategy_name or MockSongGenerationStrategy.key).lower()
 	if normalized_name == MockSongGenerationStrategy.key:
 		return MockSongGenerationStrategy()
-	if normalized_name == SunoApiOrgGenerationStrategy.key:
+	if normalized_name in {SunoApiOrgGenerationStrategy.key, "suno"}:
 		return SunoApiOrgGenerationStrategy(
 			base_url=suno_base_url,
 			api_key=suno_api_key,
@@ -335,9 +335,9 @@ class GeneratorViewController:
 			generation_result = strategy.generate(payload)
 		except SongGenerationError as exc:
 			print(f"Generation failed: {exc}")
-			# We'll pass the error message up so it can be shown to the user
 			song.status = Status.FAILED
-			song.save(update_fields=["status"])
+			song.error_message = str(exc)
+			song.save(update_fields=["status", "error_message"])
 			raise ValueError(f"Generation failed: {str(exc)}") from exc
 
 		fields_to_update = []

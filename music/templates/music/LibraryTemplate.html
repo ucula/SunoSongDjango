@@ -31,6 +31,11 @@
                     {{ song.gen_form.genre }} • {{ song.gen_form.mood_tone }} • Voice: {{ song.gen_form.voice }}
                 </div>
                 {% endif %}
+                {% if song.status == 'failed' and song.error_message %}
+                <div class="error-text" style="color: #ff4c4c; font-size: 0.75rem; margin-top: 4px;">
+                    <i class="ph ph-warning-circle"></i> {{ song.error_message }}
+                </div>
+                {% endif %}
             </div>
             
             <div class="history-item-actions" style="display:flex; align-items:center; gap:8px;">

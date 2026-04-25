@@ -25,6 +25,7 @@ class Song(models.Model):
     e_rating = models.CharField(max_length=1, blank=True, default="E")
     title = models.CharField(max_length=255)
     audio_url = models.URLField(blank=True, default="")
+    error_message = models.TextField(blank=True, default="")
 
     class Meta:
         constraints = [

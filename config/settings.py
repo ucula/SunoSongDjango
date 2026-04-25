@@ -126,7 +126,7 @@ def _env_int(name, default):
         return default
 
 # Song generation strategy configuration.
-SONG_GENERATION_STRATEGY = os.getenv('SONG_GENERATION_STRATEGY', 'mock')
+SONG_GENERATION_STRATEGY = os.getenv('GENERATOR_STRATEGY', 'mock')
 SUNO_API_URL = os.getenv('SUNO_API_URL', '')
 SUNO_API_KEY = os.getenv('SUNO_API_KEY', '')
 SUNO_API_TIMEOUT_SECONDS = _env_int('SUNO_API_TIMEOUT_SECONDS', 10)

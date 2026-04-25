@@ -76,63 +76,50 @@ http://127.0.0.1:8000/admin/
 
 ## Song Generation Strategies (Strategy Pattern)
 
-The generation flow now uses interchangeable strategies so domain logic can stay unchanged while generation behavior changes.
+The generation flow uses the Strategy Pattern to allow interchangeable generation logic. This keeps the core domain logic decoupled from the specific generation implementation.
 
-- `mock`: deterministic, offline generator for local development/tests.
-- `suno_api`: external API-backed generator.
+- `mock`: Deterministic, offline generator for local development and testing.
+- `suno`: External API-backed generator using the Suno AI service.
 
 ### Configuration
 
-Set these values with environment variables. They are read in `config/settings.py`:
+Configuration is managed via environment variables. See [.env.example](file:///.env.example) for a template.
 
-- `SONG_GENERATION_STRATEGY` (default: `mock`)
-- `SUNO_API_URL` (required for `suno_api`)
-- `SUNO_API_KEY` (required for `suno_api`)
-- `SUNO_API_TIMEOUT_SECONDS` (default: `10`)
+- `GENERATOR_STRATEGY`: Set to `mock` or `suno` (default: `mock`).
+- `SUNO_API_URL`: The endpoint URL for the Suno API (required for `suno`).
+- `SUNO_API_KEY`: Your API key for Suno (required for `suno`).
+- `SUNO_API_TIMEOUT_SECONDS`: Request timeout in seconds (default: `15`).
 
-Example:
+### How to Switch Strategy
 
-```bash
-export SONG_GENERATION_STRATEGY=mock
-export SUNO_API_URL=https://your-suno-endpoint.example/api/generate
-export SUNO_API_KEY=your_real_suno_api_key
-export SUNO_API_TIMEOUT_SECONDS=10
-```
+1.  **Mock Mode:** Set `GENERATOR_STRATEGY=mock` in your `.env` file for fast, offline development.
+2.  **Live Mode:** Set `GENERATOR_STRATEGY=suno` and provide valid `SUNO_API_URL` and `SUNO_API_KEY` to generate real songs.
 
-### How to switch strategy
+The strategy is resolved at runtime in `music/views/generator_views.py` using the `get_generation_strategy` factory function.
 
-1. Set `SONG_GENERATION_STRATEGY=mock` for deterministic offline mode.
-2. Set `SONG_GENERATION_STRATEGY=suno_api` to use the Suno API strategy.
-3. Restart the Django server after changing environment variables.
+### Backend Endpoint
 
-The strategy selector is intentionally hard-coded in `get_generation_strategy(...)` to the supported values `mock` and `suno_api`.
-
-### Where to put the SUNO API key
-
-Put the key in the `SUNO_API_KEY` environment variable before starting Django.
-
-- macOS/Linux shell: `export SUNO_API_KEY=...`
-- Then run: `python manage.py runserver`
-
-### Usage in code
-
-Use `GeneratorViewController.generate_song_for_form(gen_form_id, strategy_name=None)`.
-
-- If `strategy_name` is provided, it overrides configured default.
-- If omitted, the controller uses `SONG_GENERATION_STRATEGY`.
-
-### Backend endpoint
-
-POST endpoint for generation:
+The generation can be triggered via a POST request:
 
 - `POST /generate/song/<gen_form_id>/`
-- Optional body field: `strategy` (`mock` or `suno_api`)
+- Body (JSON or Form): `{"strategy": "suno"}` or `{"strategy": "mock"}`
 
-Quick demo commands (replace 1 with a valid GenForm id):
+Example using `curl`:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/generate/song/1/ -d "strategy=mock"
-curl -X POST http://127.0.0.1:8000/generate/song/1/ -H "Content-Type: application/json" -d '{"strategy":"suno_api"}'
+curl -X POST http://127.0.0.1:8000/generate/song/1/ -d "strategy=suno"
+```
+
+### Verification & Tests
+
+Both strategies are covered by automated tests to ensure reliability:
+
+- `SongGenerationStrategyTests`: Verifies individual strategy logic.
+- `SongGenerationEndpointTests`: Verifies the API endpoint behavior with different strategies.
+
+Run tests with:
+```bash
+python manage.py test
 ```
 
 ### Demonstration (unit tests)
