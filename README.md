@@ -1,11 +1,5 @@
 # Sunosong
-
-## Django App Setup
-
-This project uses a custom Django user model and a music domain app.
-
 ### Requirements
-
 - Python 3.14+
 - Django installed from `requirements.txt`
 
