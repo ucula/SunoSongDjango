@@ -1,23 +1,94 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GenFormTemplate</title>
-</head>
-<body>
-    <h1>GenFormTemplate</h1>
-    <p>This page represents the generation form template from the UML.</p>
-    <ul>
-        <li>title</li>
-        <li>mood/tone</li>
-        <li>genre</li>
-        <li>voice</li>
-        <li>description</li>
-    </ul>
-    <nav>
-        <a href="{% url 'login-template' %}">LoginTemplate</a>
-        <a href="{% url 'library-template' %}">LibraryTemplate</a>
-    </nav>
-</body>
-</html>
+{% extends "music/base.html" %}
+{% block title %}Generate — SunoSong{% endblock %}
+{% block nav_generate %}active{% endblock %}
+
+{% block content %}
+<div class="page-header animate-in">
+    <h1>Generate Song</h1>
+    <p>Craft tracks with AI — fill in the details and generate instantly.</p>
+    <p style="color:var(--accent);font-size:.85rem;font-weight:600;">{{ free_mode_note }}</p>
+</div>
+
+{% if show_tutorial %}
+<div class="tutorial-banner animate-in-delay-1">
+    <strong>Quick Start:</strong> Fill in title, mood, genre, voice, and description. Choose a strategy (mock for offline, suno_api for external) and hit Generate!
+</div>
+{% endif %}
+
+<div style="max-width:600px;margin:0 auto;">
+    <!-- Generation Form -->
+    <div class="card animate-in-delay-1">
+        <h2><i class="ph ph-music-notes-plus" style="margin-right:8px;"></i>New Song</h2>
+        <form method="post" id="gen-form">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="input-title">Title</label>
+                    <input type="text" name="title" id="input-title" value="{{ form_data.title|default:'' }}" required placeholder="My Song">
+                </div>
+                <div class="form-group">
+                    <label for="input-mood">Mood / Tone</label>
+                    <select name="mood_tone" id="input-mood" required>
+                        <option value="" disabled {% if not form_data.mood_tone %}selected{% endif %}>Select Mood</option>
+                        <option value="Happy" {% if form_data.mood_tone == 'Happy' %}selected{% endif %}>Happy</option>
+                        <option value="Chill" {% if form_data.mood_tone == 'Chill' %}selected{% endif %}>Chill</option>
+                        <option value="Energetic" {% if form_data.mood_tone == 'Energetic' %}selected{% endif %}>Energetic</option>
+                        <option value="Sad" {% if form_data.mood_tone == 'Sad' %}selected{% endif %}>Sad</option>
+                        <option value="Romantic" {% if form_data.mood_tone == 'Romantic' %}selected{% endif %}>Romantic</option>
+                        <option value="Dark" {% if form_data.mood_tone == 'Dark' %}selected{% endif %}>Dark</option>
+                        <option value="Epic" {% if form_data.mood_tone == 'Epic' %}selected{% endif %}>Epic</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="input-genre">Genre</label>
+                    <select name="genre" id="input-genre" required>
+                        <option value="" disabled {% if not form_data.genre %}selected{% endif %}>Select Genre</option>
+                        <option value="Pop" {% if form_data.genre == 'Pop' %}selected{% endif %}>Pop</option>
+                        <option value="Rock" {% if form_data.genre == 'Rock' %}selected{% endif %}>Rock</option>
+                        <option value="Jazz" {% if form_data.genre == 'Jazz' %}selected{% endif %}>Jazz</option>
+                        <option value="Hip Hop" {% if form_data.genre == 'Hip Hop' %}selected{% endif %}>Hip Hop</option>
+                        <option value="R&B" {% if form_data.genre == 'R&B' %}selected{% endif %}>R&B</option>
+                        <option value="Electronic" {% if form_data.genre == 'Electronic' %}selected{% endif %}>Electronic</option>
+                        <option value="Classical" {% if form_data.genre == 'Classical' %}selected{% endif %}>Classical</option>
+                        <option value="Country" {% if form_data.genre == 'Country' %}selected{% endif %}>Country</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="select-voice">Singer Voice</label>
+                    <select name="voice" id="select-voice" required>
+                        <option value="" disabled {% if not form_data.voice %}selected{% endif %}>Select Voice</option>
+                        {% for value, label in voice_choices %}
+                        <option value="{{ value }}" {% if form_data.voice == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="input-desc">Description</label>
+                <textarea name="description" id="input-desc" placeholder="Describe why this song should sound this way...">{{ form_data.description|default:'' }}</textarea>
+            </div>
+
+            <div style="margin-top:16px;">
+                <button type="submit" class="btn-primary" id="btn-generate" style="width:100%;padding:14px;font-size:1rem;"><i class="ph ph-magic-wand" style="margin-right:8px;"></i>Generate</button>
+            </div>
+        </form>
+        <script>
+            document.getElementById('gen-form').addEventListener('submit', function() {
+                var btn = document.getElementById('btn-generate');
+                btn.innerHTML = '<i class="ph ph-spinner ph-spin" style="margin-right:8px;"></i>Generating... Please wait';
+                btn.style.opacity = '0.7';
+                btn.style.pointerEvents = 'none';
+                
+                // Clear the form after a tiny delay so it doesn't affect the submission data
+                const form = this;
+                setTimeout(() => {
+                    form.reset();
+                }, 100);
+            });
+        </script>
+    </div>
+
+</div>
+{% endblock %}

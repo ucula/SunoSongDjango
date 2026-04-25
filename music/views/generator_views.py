@@ -1,18 +1,23 @@
 from __future__ import annotations
 
 import json
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from hashlib import sha256
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from django.contrib import messages
 from django.conf import settings
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 
-from music.models import GenForm, Library, Song, Status
+from music.models import GenForm, Library, Song, Status, User, Voice
+
+
+DEFAULT_AUDIO_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
 
 
 class SongGenerationError(Exception):
@@ -43,6 +48,7 @@ class GenerationResult:
 	title: str | None = None
 	e_rating: str = "E"
 	external_id: str | None = None
+	audio_url: str = DEFAULT_AUDIO_URL
 
 
 class SongGenerationStrategy(ABC):
@@ -71,15 +77,17 @@ class MockSongGenerationStrategy(SongGenerationStrategy):
 			title=f"{payload.title} [mock-{digest[:6]}]",
 			e_rating="E",
 			external_id=f"mock-{digest}",
+			audio_url=DEFAULT_AUDIO_URL,
 		)
 
 
-class SunoApiSongGenerationStrategy(SongGenerationStrategy):
-	key = "suno_api"
 
-	def __init__(self, *, base_url: str, api_key: str, timeout_seconds: int = 10):
-		self.base_url = base_url
-		self.api_key = api_key
+class SunoApiOrgGenerationStrategy(SongGenerationStrategy):
+	key = "api"
+
+	def __init__(self, *, base_url: str, api_key: str, timeout_seconds: int = 15):
+		self.base_url = base_url.strip().rstrip("/")
+		self.api_key = api_key.strip()
 		self.timeout_seconds = timeout_seconds
 
 	def generate(self, payload: GenerationPayload) -> GenerationResult:
@@ -88,20 +96,35 @@ class SunoApiSongGenerationStrategy(SongGenerationStrategy):
 		if not self.api_key:
 			raise SongGenerationError("SUNO_API_KEY is not configured.")
 
+		# Construct prompt from genre, mood, voice, and topic (description). 
+		prompt_parts = []
+		if payload.genre:
+			prompt_parts.append(f"Genre: {payload.genre}")
+		if payload.mood_tone:
+			prompt_parts.append(f"Mood: {payload.mood_tone}")
+		if payload.voice:
+			prompt_parts.append(f"Vocals: {payload.voice}")
+		if payload.description:
+			prompt_parts.append(f"Topic: {payload.description}")
+			
+		prompt_text = ", ".join(prompt_parts) or "A creative song"
+
 		request_body = {
-			"title": payload.title,
-			"mood_tone": payload.mood_tone,
-			"genre": payload.genre,
-			"voice": payload.voice,
-			"description": payload.description,
+			"customMode": False,
+			"instrumental": False,
+			"model": "V4_5ALL",
+			"callBackUrl": "https://api.sunoapi.org/dummy-callback",
+			"prompt": prompt_text[:490]
 		}
+		
 		encoded_body = json.dumps(request_body).encode("utf-8")
 		request = Request(
-			url=self.base_url,
+			url=f"{self.base_url}/api/v1/generate",
 			data=encoded_body,
 			headers={
 				"Content-Type": "application/json",
 				"Authorization": f"Bearer {self.api_key}",
+				"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
 			},
 			method="POST",
 		)
@@ -110,32 +133,71 @@ class SunoApiSongGenerationStrategy(SongGenerationStrategy):
 			with urlopen(request, timeout=self.timeout_seconds) as response:
 				raw_response = response.read().decode("utf-8") or "{}"
 		except HTTPError as exc:
-			detail = ""
-			try:
-				detail = exc.read().decode("utf-8")
-			except Exception:
-				detail = ""
-			raise SongGenerationError(
-				f"Suno API returned HTTP {exc.code}. {detail}".strip()
-			) from exc
+			raise SongGenerationError(f"sunoapi.org API POST returned HTTP {exc.code}.") from exc
 		except URLError as exc:
-			raise SongGenerationError(f"Could not reach Suno API: {exc.reason}") from exc
+			raise SongGenerationError(f"Could not reach sunoapi.org API: {exc.reason}") from exc
 
 		try:
 			payload_data = json.loads(raw_response)
 		except json.JSONDecodeError as exc:
-			raise SongGenerationError("Suno API returned malformed JSON.") from exc
+			raise SongGenerationError("sunoapi.org API returned malformed JSON.") from exc
 
-		generated_title = payload_data.get("title") or payload.title
-		e_rating = payload_data.get("e_rating", "E")
-		if e_rating not in {"E", ""}:
-			e_rating = "E"
+		if payload_data.get("code") != 200:
+			raise SongGenerationError(f"API Error: {payload_data.get('msg', 'Unknown')}")
+			
+		task_data = payload_data.get("data", {})
+		task_id = task_data.get("taskId")
+		
+		if not task_id:
+			raise SongGenerationError("API did not return a taskId.")
 
-		return GenerationResult(
-			title=generated_title,
-			e_rating=e_rating,
-			external_id=payload_data.get("song_id") or payload_data.get("id"),
-		)
+		# 2. Poll for Status
+		max_attempts = 30  # Max 30 attempts * 5s = 150 seconds
+		for attempt in range(max_attempts):
+			time.sleep(5) # Wait 5 seconds between polls
+			
+			poll_request = Request(
+				url=f"{self.base_url}/api/v1/generate/record-info?taskId={task_id}",
+				headers={
+					"Authorization": f"Bearer {self.api_key}",
+					"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+				},
+				method="GET",
+			)
+			
+			try:
+				with urlopen(poll_request, timeout=self.timeout_seconds) as poll_response:
+					poll_raw = poll_response.read().decode("utf-8") or "{}"
+					poll_data = json.loads(poll_raw)
+			except Exception as exc:
+				print(f"Polling error: {exc}")
+				continue # Retry on transient network errors
+				
+			if poll_data.get("code") != 200:
+				continue
+				
+			status_data = poll_data.get("data", {})
+			status = status_data.get("status")
+			
+			if status == "SUCCESS":
+				# Extract audio URL
+				response_obj = status_data.get("response", {})
+				data_list = response_obj.get("sunoData", [])
+				if data_list and isinstance(data_list, list) and len(data_list) > 0:
+					audio_url = data_list[0].get("audioUrl") or DEFAULT_AUDIO_URL
+				else:
+					audio_url = DEFAULT_AUDIO_URL
+					
+				return GenerationResult(
+					title=payload.title,
+					e_rating="E",
+					external_id=task_id,
+					audio_url=audio_url,
+				)
+			elif status and "FAILED" in status:
+				raise SongGenerationError(f"sunoapi.org generation failed: {status}")
+				
+		raise SongGenerationError("Timed out waiting for sunoapi.org generation.")
 
 
 def get_generation_strategy(
@@ -149,8 +211,8 @@ def get_generation_strategy(
 	normalized_name = (strategy_name or MockSongGenerationStrategy.key).lower()
 	if normalized_name == MockSongGenerationStrategy.key:
 		return MockSongGenerationStrategy()
-	if normalized_name == SunoApiSongGenerationStrategy.key:
-		return SunoApiSongGenerationStrategy(
+	if normalized_name == SunoApiOrgGenerationStrategy.key:
+		return SunoApiOrgGenerationStrategy(
 			base_url=suno_base_url,
 			api_key=suno_api_key,
 			timeout_seconds=suno_timeout_seconds,
@@ -160,8 +222,69 @@ def get_generation_strategy(
 
 class GeneratorViewController:
 	@staticmethod
+	def get_active_user(request):
+		user_id = request.session.get("active_user_id")
+		if not user_id:
+			return None
+		try:
+			return User.objects.get(pk=user_id)
+		except User.DoesNotExist:
+			return None
+
+	@staticmethod
 	def gen_form_template_view(request):
-		return render(request, "music/GenFormTemplate.html")
+		active_user = GeneratorViewController.get_active_user(request)
+		show_tutorial = not request.session.get("gen_tutorial_seen", False)
+		if show_tutorial:
+			request.session["gen_tutorial_seen"] = True
+
+		context = {
+			"active_user": active_user,
+			"voice_choices": Voice.choices,
+			"strategy_default": getattr(settings, "SONG_GENERATION_STRATEGY", "mock"),
+			"show_tutorial": show_tutorial,
+			"free_mode_note": "This app is free to use. Mock strategy works without paid API access.",
+		}
+
+		if request.method != "POST":
+			if active_user is None:
+				return HttpResponseRedirect("/login/")
+			return render(request, "music/GenFormTemplate.html", context)
+
+		if active_user is None:
+			messages.error(request, "Please login with a Google account before generating songs.")
+			return render(request, "music/GenFormTemplate.html", context, status=400)
+
+		title = request.POST.get("title", "").strip()
+		mood_tone = request.POST.get("mood_tone", "").strip()
+		genre = request.POST.get("genre", "").strip()
+		voice = request.POST.get("voice", "").strip()
+		description = request.POST.get("description", "").strip()
+		strategy_name = request.POST.get("strategy", "").strip() or None
+
+		if not all([title, mood_tone, genre, voice]):
+			messages.error(request, "Title, Mood, Genre, and Voice are required for generation.")
+			context["form_data"] = request.POST
+			return render(request, "music/GenFormTemplate.html", context, status=400)
+
+		gen_form = GeneratorViewController.create_gen_form(
+			user=active_user,
+			title=title,
+			mood_tone=mood_tone,
+			genre=genre,
+			voice=voice,
+			description=description,
+		)
+
+		try:
+			song = GeneratorViewController.generate_song_for_form(gen_form.pk, strategy_name=strategy_name)
+		except ValueError as exc:
+			messages.error(request, str(exc))
+			context["form_data"] = request.POST
+			return render(request, "music/GenFormTemplate.html", context, status=400)
+
+		messages.success(request, f"Generation started! Check your Library to view the song status.")
+		return HttpResponseRedirect("/library/")
 
 	@staticmethod
 	def resolve_generation_strategy(strategy_name=None):
@@ -197,6 +320,7 @@ class GeneratorViewController:
 			title=song_title or gen_form.title,
 			status=Status.GENERATING,
 			e_rating=e_rating,
+			audio_url=DEFAULT_AUDIO_URL,
 		)
 		return song
 
@@ -209,8 +333,12 @@ class GeneratorViewController:
 
 		try:
 			generation_result = strategy.generate(payload)
-		except SongGenerationError:
-			return GeneratorViewController.mark_failed(song.pk)
+		except SongGenerationError as exc:
+			print(f"Generation failed: {exc}")
+			# We'll pass the error message up so it can be shown to the user
+			song.status = Status.FAILED
+			song.save(update_fields=["status"])
+			raise ValueError(f"Generation failed: {str(exc)}") from exc
 
 		fields_to_update = []
 		if generation_result.title and generation_result.title != song.title:
@@ -219,6 +347,9 @@ class GeneratorViewController:
 		if generation_result.e_rating in {"E", ""} and generation_result.e_rating != song.e_rating:
 			song.e_rating = generation_result.e_rating
 			fields_to_update.append("e_rating")
+		if generation_result.audio_url and generation_result.audio_url != song.audio_url:
+			song.audio_url = generation_result.audio_url
+			fields_to_update.append("audio_url")
 
 		if fields_to_update:
 			song.save(update_fields=fields_to_update)

@@ -128,6 +128,13 @@ POST endpoint for generation:
 - `POST /generate/song/<gen_form_id>/`
 - Optional body field: `strategy` (`mock` or `suno_api`)
 
+Quick demo commands (replace 1 with a valid GenForm id):
+
+```bash
+curl -X POST http://127.0.0.1:8000/generate/song/1/ -d "strategy=mock"
+curl -X POST http://127.0.0.1:8000/generate/song/1/ -H "Content-Type: application/json" -d '{"strategy":"suno_api"}'
+```
+
 ### Demonstration (unit tests)
 
 The following tests demonstrate both strategies and backend operation:
@@ -142,3 +149,27 @@ Run all tests:
 ```bash
 python manage.py test
 ```
+
+## Client Requirement Coverage
+
+This web app currently includes the following features requested by the client:
+
+- Google email only login flow (`@gmail.com`) via LoginTemplate.
+- Generation form with required fields: title, mood/tone, genre, singer voice, description.
+- Generation statuses (`generating`, `ready`, `failed`) and generation timestamp history in LibraryTemplate.
+- Song rating fixed to `E`.
+- First-time tutorial hints in generate and library pages.
+- Browser playback controls: play, pause, stop, rewind 10s, forward 10s, loop.
+- Song search by title.
+- Favorites support.
+- Download support (txt, json, m3u formats).
+- Share API endpoint returning share path and audio URL.
+- Prompt editing for generated song metadata (genre/mood/description) and song deletion.
+- Desktop-friendly monochrome layout.
+
+## Quick User Flow
+
+1. Open `/login/` and sign in with a Gmail account.
+2. Open `/generate/`, fill the form, and submit.
+3. Open `/library/` to search, play, favorite, edit prompt, share, or download songs.
+4. Open `/favourite/` or `/song/` for dedicated playback/favorites views.

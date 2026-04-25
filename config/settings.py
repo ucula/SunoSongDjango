@@ -12,9 +12,13 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -126,3 +130,11 @@ SONG_GENERATION_STRATEGY = os.getenv('SONG_GENERATION_STRATEGY', 'mock')
 SUNO_API_URL = os.getenv('SUNO_API_URL', '')
 SUNO_API_KEY = os.getenv('SUNO_API_KEY', '')
 SUNO_API_TIMEOUT_SECONDS = _env_int('SUNO_API_TIMEOUT_SECONDS', 10)
+
+# Google OAuth configuration.
+GOOGLE_OAUTH_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID', '920293297383-e2ljorj4agrkgdio3k1ldkjua4evf0ui.apps.googleusercontent.com')
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET', '')
+GOOGLE_OAUTH_REDIRECT_URI = os.getenv(
+    'GOOGLE_OAUTH_REDIRECT_URI',
+    'http://127.0.0.1:8000/login/google/callback/',
+)
