@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -109,3 +110,19 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
+def _env_int(name, default):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+# Song generation strategy configuration.
+SONG_GENERATION_STRATEGY = os.getenv('SONG_GENERATION_STRATEGY', 'mock')
+SUNO_API_URL = os.getenv('SUNO_API_URL', '')
+SUNO_API_KEY = os.getenv('SUNO_API_KEY', '')
+SUNO_API_TIMEOUT_SECONDS = _env_int('SUNO_API_TIMEOUT_SECONDS', 10)
