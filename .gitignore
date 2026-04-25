@@ -57,7 +57,9 @@ staticfiles/
 
 # Environments
 .env
-.env.*
+.env.[!e]*
+.env.e[!x]*
+!.env.example
 .venv/
 venv/
 env/
