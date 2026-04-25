@@ -1,6 +1,18 @@
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 
 from .models import Favourite, GenForm, Library, Song, User
+
+
+class FourDigitNumericPasswordValidator:
+	def validate(self, password, user=None):
+		if password is None:
+			raise ValidationError("Password is required.")
+		if len(password) != 4 or not password.isdigit():
+			raise ValidationError("Password must be exactly 4 digits.")
+
+	def get_help_text(self):
+		return "Your password must be exactly 4 digits."
 
 
 @admin.register(User)

@@ -1,9 +1,14 @@
 from django.db import transaction
+from django.shortcuts import render
 
 from music.models import Library, User
 
 
 class UserViewController:
+	@staticmethod
+	def login_template_view(request):
+		return render(request, "music/LoginTemplate.html")
+
 	@staticmethod
 	@transaction.atomic
 	def create_user(display_name, email=None, password=None, **extra_fields):

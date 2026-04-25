@@ -1,9 +1,22 @@
 from django.db import transaction
+from django.shortcuts import render
 
 from music.models import Favourite, Library, Song, Status
 
 
 class LibraryViewController:
+	@staticmethod
+	def library_template_view(request):
+		return render(request, "music/LibraryTemplate.html")
+
+	@staticmethod
+	def song_template_view(request):
+		return render(request, "music/SongTemplate.html")
+
+	@staticmethod
+	def favourite_template_view(request):
+		return render(request, "music/FavouriteTemplate.html")
+
 	@staticmethod
 	@transaction.atomic
 	def create_song(*, library_id, title, status=Status.GENERATING, e_rating="E", gen_form=None):

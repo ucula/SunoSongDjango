@@ -1,9 +1,14 @@
 from django.db import transaction
+from django.shortcuts import render
 
 from music.models import GenForm, Library, Song, Status
 
 
 class GeneratorViewController:
+	@staticmethod
+	def gen_form_template_view(request):
+		return render(request, "music/GenFormTemplate.html")
+
 	@staticmethod
 	@transaction.atomic
 	def create_gen_form(*, user, title, mood_tone, genre, voice, description):
