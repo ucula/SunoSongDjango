@@ -98,6 +98,8 @@ class SunoApiOrgGenerationStrategy(SongGenerationStrategy):
 
 		# Construct prompt from genre, mood, voice, and topic (description). 
 		prompt_parts = []
+		if payload.title:
+			prompt_parts.append(f"Title: {payload.title}")
 		if payload.genre:
 			prompt_parts.append(f"Genre: {payload.genre}")
 		if payload.mood_tone:

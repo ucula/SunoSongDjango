@@ -253,7 +253,8 @@ html, body {
 .volume-slider {
     -webkit-appearance: none; appearance: none; width: 80px; height: 4px;
     max-width: 100%; min-width: 40px;
-    background: var(--bg-highlight); border-radius: 2px; outline: none;
+    background: linear-gradient(to right, #ffffff 0%, #ffffff var(--vol-pct, 70%), var(--bg-highlight) var(--vol-pct, 70%), var(--bg-highlight) 100%); 
+    border-radius: 2px; outline: none;
     border: none; padding: 0; flex-shrink: 1;
 }
 .volume-slider::-webkit-slider-thumb {
@@ -618,6 +619,72 @@ html, body {
     display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
 }
 .action-row form { display: inline-flex; }
+
+/* ── Intro.js Dark Theme Overrides ── */
+.introjs-tooltip {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--bg-highlight);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.8);
+}
+.introjs-tooltiptext {
+    font-family: 'Inter', sans-serif;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+.introjs-tooltiptext strong {
+    color: var(--text-primary);
+    font-size: 1.05rem;
+    display: inline-block;
+    margin-bottom: 4px;
+}
+.introjs-arrow.top { border-bottom-color: var(--bg-surface); }
+.introjs-arrow.bottom { border-top-color: var(--bg-surface); }
+.introjs-arrow.left { border-right-color: var(--bg-surface); }
+.introjs-arrow.right { border-left-color: var(--bg-surface); }
+
+.introjs-button {
+    background-color: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--bg-highlight);
+    text-shadow: none;
+    border-radius: var(--radius);
+    transition: all var(--transition);
+    padding: 6px 12px;
+}
+.introjs-button:hover, .introjs-button:focus, .introjs-button:active {
+    background-color: var(--bg-highlight);
+    color: #fff;
+    border-color: var(--text-subdued);
+    box-shadow: none;
+}
+.introjs-button.introjs-disabled {
+    color: var(--text-subdued);
+    background-color: var(--bg-surface);
+    border-color: rgba(255,255,255,0.05);
+}
+
+.introjs-progress {
+    background-color: var(--bg-base);
+    border-radius: 4px;
+    border: 1px solid var(--bg-highlight);
+    margin: 10px;
+}
+.introjs-progressbar {
+    background-color: var(--text-primary);
+}
+.introjs-tooltipbuttons {
+    border-top: 1px solid var(--bg-highlight);
+    padding: 10px;
+}
+
+.introjs-helperLayer {
+    border: 2px solid var(--accent) !important;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius);
+}
 
 /* ── Responsive ── */
 @media (max-width: 900px) {

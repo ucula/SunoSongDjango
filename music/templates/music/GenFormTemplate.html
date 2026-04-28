@@ -1,4 +1,4 @@
-{% extends "music/base.html" %}
+{% extends "music/Main.html" %}
 {% block title %}Generate — SunoSong{% endblock %}
 {% block nav_generate %}active{% endblock %}
 
@@ -15,12 +15,16 @@
 </div>
 {% endif %}
 
-<div style="max-width:600px;margin:0 auto;">
-    <!-- Generation Form -->
-    <div class="card animate-in-delay-1">
-        <h2><i class="ph ph-music-notes-plus" style="margin-right:8px;"></i>New Song</h2>
+<div class="two-col animate-in-delay-1">
+    <!-- Left Column: Generator Form -->
+    <div class="card">
+        <h2><i class="ph ph-music-notes-plus" style="margin-right:8px;"></i>Creator Studio</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.95rem;">Select your desired mood, genre, and voice to instantly generate a new track.</p>
+        
         <form method="post" id="gen-form">
             {% csrf_token %}
+            
+            <h4 style="margin-bottom: 12px; color: var(--text-primary); border-bottom: 1px solid var(--bg-highlight); padding-bottom: 8px;">Track Details</h4>
             <div class="form-row">
                 <div class="form-group">
                     <label for="input-title">Title</label>
@@ -40,6 +44,8 @@
                     </select>
                 </div>
             </div>
+
+            <h4 style="margin-top: 16px; margin-bottom: 12px; color: var(--text-primary); border-bottom: 1px solid var(--bg-highlight); padding-bottom: 8px;">Style Configuration</h4>
             <div class="form-row">
                 <div class="form-group">
                     <label for="input-genre">Genre</label>
@@ -65,13 +71,15 @@
                     </select>
                 </div>
             </div>
+
+            <h4 style="margin-top: 16px; margin-bottom: 12px; color: var(--text-primary); border-bottom: 1px solid var(--bg-highlight); padding-bottom: 8px;">Description (Optional)</h4>
             <div class="form-group">
                 <label for="input-desc">Description</label>
-                <textarea name="description" id="input-desc" placeholder="Describe why this song should sound this way...">{{ form_data.description|default:'' }}</textarea>
+                <textarea name="description" id="input-desc" style="min-height: 100px;" placeholder="Add any personal notes, explanations, or context for this song..."></textarea>
             </div>
 
-            <div style="margin-top:16px;">
-                <button type="submit" class="btn-primary" id="btn-generate" style="width:100%;padding:14px;font-size:1rem;"><i class="ph ph-magic-wand" style="margin-right:8px;"></i>Generate</button>
+            <div style="margin-top:24px;">
+                <button type="submit" class="btn-primary" id="btn-generate" style="width:100%;padding:14px;font-size:1rem; font-weight:600;"><i class="ph ph-magic-wand" style="margin-right:8px;"></i>Generate Track</button>
             </div>
         </form>
         <script>
@@ -81,14 +89,40 @@
                 btn.style.opacity = '0.7';
                 btn.style.pointerEvents = 'none';
                 
-                // Clear the form after a tiny delay so it doesn't affect the submission data
-                const form = this;
-                setTimeout(() => {
-                    form.reset();
-                }, 100);
+                // Lock all inputs to prevent putting in another prompt
+                const elements = this.elements;
+                for (let i = 0; i < elements.length; i++) {
+                    elements[i].style.pointerEvents = 'none';
+                    elements[i].style.opacity = '0.7';
+                    // Using readonly instead of disabled so the data still submits properly
+                    if (elements[i].tagName === 'INPUT' || elements[i].tagName === 'TEXTAREA') {
+                        elements[i].readOnly = true;
+                    }
+                }
             });
         </script>
     </div>
 
+    <!-- Right Column: Status Widget -->
+    <div class="inspiration-sidebar" style="display: flex; flex-direction: column; height: 100%;">
+        <div class="card" style="background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0) 100%); border: 1px solid var(--bg-highlight); text-align: center; padding: 60px 24px; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%;">
+            
+            <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--accent) 0%, #a855f7 100%); margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 40px rgba(168, 85, 247, 0.4);">
+                <i class="ph-bold ph-waveform" style="font-size: 2.5rem; color: #fff;"></i>
+            </div>
+            
+            <h3 style="margin-bottom: 12px; color: var(--text-primary); font-size: 1.3rem; font-weight: 700; letter-spacing: -0.5px;">Audio Engine Online</h3>
+            
+            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; margin-bottom: 32px; max-width: 250px;">
+                The SunoSong generative AI is currently standing by. Select your parameters and synthesize a new track instantly.
+            </p>
+            
+            <div style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.05); border: 1px solid var(--bg-highlight);">
+                <div style="width: 8px; height: 8px; border-radius: 50%; background-color: #10b981; box-shadow: 0 0 10px #10b981;"></div>
+                <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-primary); text-transform: uppercase; letter-spacing: 1px;">System Ready</span>
+            </div>
+            
+        </div>
+    </div>
 </div>
 {% endblock %}

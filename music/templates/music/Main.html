@@ -1,29 +1,40 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}SunoSong{% endblock %}</title>
     <meta name="description" content="AI-powered music generation platform — create, explore and share songs.">
-    <link rel="stylesheet" href="{% static 'music/app.css' %}">
+    <link rel="stylesheet" href="https://unpkg.com/intro.js/minified/introjs.min.css">
+    <link rel="stylesheet" href="{% static 'music/app.css' %}?v=3">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
+
 <body hx-boost="true" hx-target=".main-content" hx-select=".main-content">
     <div class="app-shell">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <div class="brand">Suno<span>Song</span></div>
+            <div class="brand" style="display:flex; justify-content:space-between; align-items:center;">
+                <div>Suno<span>Song</span></div>
+                <button onclick="startTutorial()" class="btn-icon" title="View Tutorial" style="font-size: 1.2rem;">
+                    <i class="ph ph-question"></i>
+                </button>
+            </div>
             <nav>
-                <a href="{% url 'gen-form-template' %}" class="nav-item {% block nav_generate %}{% endblock %}" id="nav-generate">
+                <a href="{% url 'gen-form-template' %}" class="nav-item {% block nav_generate %}{% endblock %}"
+                    id="nav-generate">
                     <span class="nav-icon"><i class="ph ph-sparkle"></i></span> Generate
                 </a>
-                <a href="{% url 'library-template' %}" class="nav-item {% block nav_library %}{% endblock %}" id="nav-library">
+                <a href="{% url 'library-template' %}" class="nav-item {% block nav_library %}{% endblock %}"
+                    id="nav-library">
                     <span class="nav-icon"><i class="ph ph-books"></i></span> Library
                 </a>
 
-                <a href="{% url 'favourite-template' %}" class="nav-item {% block nav_fav %}{% endblock %}" id="nav-favourites">
+                <a href="{% url 'favourite-template' %}" class="nav-item {% block nav_fav %}{% endblock %}"
+                    id="nav-favourites">
                     <span class="nav-icon"><i class="ph-fill ph-heart"></i></span> Favourites
                 </a>
                 <div class="nav-divider"></div>
@@ -64,9 +75,12 @@
 
             <div class="player-controls">
                 <div class="player-buttons">
-                    <button onclick="seekBy(-10)" title="Rewind 10s" id="btn-rewind"><i class="ph-fill ph-rewind"></i></button>
-                    <button class="play-btn" onclick="togglePlay()" id="btn-play-pause"><i class="ph-fill ph-play"></i></button>
-                    <button onclick="seekBy(10)" title="Forward 10s" id="btn-forward"><i class="ph-fill ph-fast-forward"></i></button>
+                    <button onclick="playPreviousSong()" title="Previous Song" id="btn-prev"><i
+                            class="ph-fill ph-skip-back"></i></button>
+                    <button class="play-btn" onclick="togglePlay()" id="btn-play-pause"><i
+                            class="ph-fill ph-play"></i></button>
+                    <button onclick="playNextSong()" title="Next Song" id="btn-next"><i
+                            class="ph-fill ph-skip-forward"></i></button>
                     <button onclick="toggleLoop()" title="Loop" id="btn-loop"><i class="ph-bold ph-repeat"></i></button>
                 </div>
                 <div class="progress-bar-wrap">
@@ -80,7 +94,8 @@
 
             <div class="player-volume">
                 <button onclick="toggleMute()" id="btn-volume"><i class="ph-fill ph-speaker-high"></i></button>
-                <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.01" value="0.7" oninput="setVolume(this.value)">
+                <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.01" value="0.7"
+                    oninput="setVolume(this.value)">
             </div>
         </div>
     </div>
@@ -99,16 +114,37 @@
 
         // Load saved volume
         const savedVolume = localStorage.getItem('sunoVolume');
+        let initialVol = 0.7;
         if (savedVolume !== null) {
-            audio.volume = parseFloat(savedVolume);
-            volumeSlider.value = savedVolume;
-        } else {
-            audio.volume = 0.7;
-            volumeSlider.value = 0.7;
+            initialVol = parseFloat(savedVolume);
+        }
+        audio.volume = initialVol;
+        volumeSlider.value = initialVol;
+        volumeSlider.style.background = `linear-gradient(to right, #ffffff 0%, #ffffff ${initialVol * 100}%, var(--bg-highlight) ${initialVol * 100}%, var(--bg-highlight) 100%)`;
+
+        let playlist = [];
+        let currentIndex = -1;
+
+        function updatePlaylist() {
+            playlist = [];
+            const buttons = document.querySelectorAll('button[onclick^="selectSong"]');
+            buttons.forEach(btn => {
+                const match = btn.getAttribute('onclick').match(/selectSong\('([^']+)',\s*'([^']+)'\)/);
+                if (match) {
+                    // Avoid consecutive duplicates if the same button appears twice
+                    if (playlist.length === 0 || playlist[playlist.length - 1].url !== match[2]) {
+                        playlist.push({ title: match[1], url: match[2] });
+                    }
+                }
+            });
         }
 
         function selectSong(title, audioUrl) {
             if (!audioUrl) return;
+            
+            updatePlaylist();
+            currentIndex = playlist.findIndex(s => s.url === audioUrl);
+            
             audio.src = audioUrl;
             playerTitle.textContent = title;
             playerArtist.textContent = 'SunoSong';
@@ -116,20 +152,31 @@
             playBtn.innerHTML = '<i class="ph-fill ph-pause"></i>';
         }
 
-        function togglePlay() {
-            if (!audio.src) return;
-            if (audio.paused) { 
-                audio.play(); 
-                playBtn.innerHTML = '<i class="ph-fill ph-pause"></i>'; 
-            } else { 
-                audio.pause(); 
-                playBtn.innerHTML = '<i class="ph-fill ph-play"></i>'; 
-            }
+        function playNextSong() {
+            updatePlaylist();
+            if (playlist.length === 0 || currentIndex === -1) return;
+            let nextIndex = currentIndex + 1;
+            if (nextIndex >= playlist.length) nextIndex = 0; // Loop to start
+            selectSong(playlist[nextIndex].title, playlist[nextIndex].url);
         }
 
-        function seekBy(s) {
+        function playPreviousSong() {
+            updatePlaylist();
+            if (playlist.length === 0 || currentIndex === -1) return;
+            let prevIndex = currentIndex - 1;
+            if (prevIndex < 0) prevIndex = playlist.length - 1; // Loop to end
+            selectSong(playlist[prevIndex].title, playlist[prevIndex].url);
+        }
+
+        function togglePlay() {
             if (!audio.src) return;
-            audio.currentTime = Math.max(0, audio.currentTime + s);
+            if (audio.paused) {
+                audio.play();
+                playBtn.innerHTML = '<i class="ph-fill ph-pause"></i>';
+            } else {
+                audio.pause();
+                playBtn.innerHTML = '<i class="ph-fill ph-play"></i>';
+            }
         }
 
         function toggleLoop() {
@@ -137,9 +184,10 @@
             document.getElementById('btn-loop').style.opacity = audio.loop ? '1' : '.5';
         }
 
-        function setVolume(v) { 
-            audio.volume = parseFloat(v); 
+        function setVolume(v) {
+            audio.volume = parseFloat(v);
             localStorage.setItem('sunoVolume', v);
+            volumeSlider.style.background = `linear-gradient(to right, #ffffff 0%, #ffffff ${v * 100}%, var(--bg-highlight) ${v * 100}%, var(--bg-highlight) 100%)`;
         }
 
         function toggleMute() {
@@ -182,9 +230,53 @@
                 }
             });
         }
-        
+
         document.body.addEventListener('htmx:pushedIntoHistory', updateActiveTab);
         document.addEventListener('DOMContentLoaded', updateActiveTab);
     </script>
+
+    <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
+    <script>
+        function startTutorial() {
+            introJs().setOptions({
+                showProgress: true,
+                showBullets: false,
+                exitOnOverlayClick: false,
+                disableInteraction: true,
+                steps: [
+                    {
+                        element: document.querySelector('#nav-generate'),
+                        intro: "<strong>Generate</strong><br>Click here to generate a new AI song from scratch."
+                    },
+                    {
+                        element: document.querySelector('#nav-library'),
+                        intro: "<strong>Library</strong><br>Access your library of all generated songs."
+                    },
+                    {
+                        element: document.querySelector('#nav-favourites'),
+                        intro: "<strong>Favourites</strong><br>Find your favorite, curated tracks here."
+                    },
+                    {
+                        element: document.querySelector('#bottom-player'),
+                        intro: "<strong>Player</strong><br>Control playback, volume, and progress of the currently selected song.",
+                        position: 'top'
+                    }
+                ]
+            }).oncomplete(function () {
+                localStorage.setItem('tutorialCompleted', 'true');
+            }).onexit(function () {
+                localStorage.setItem('tutorialCompleted', 'true');
+            }).start();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!localStorage.getItem('tutorialCompleted')) {
+                setTimeout(() => {
+                    startTutorial();
+                }, 500);
+            }
+        });
+    </script>
 </body>
+
 </html>

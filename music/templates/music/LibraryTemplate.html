@@ -1,4 +1,4 @@
-{% extends "music/base.html" %}
+{% extends "music/Main.html" %}
 {% block title %}Library — SunoSong{% endblock %}
 {% block nav_library %}active{% endblock %}
 
@@ -10,7 +10,12 @@
 
 <form method="GET" action="{% url 'library-template' %}" class="search-bar animate-in" style="margin-bottom: 24px;">
     <i class="ph ph-magnifying-glass" style="color: var(--text-subdued); font-size: 1.2rem;"></i>
-    <input type="text" name="q" value="{{ q }}" placeholder="Search by song title..." autocomplete="off">
+    <input type="text" name="q" id="search-input" value="{{ q }}" placeholder="Search by song title..." autocomplete="off"
+           hx-get="{% url 'library-template' %}"
+           hx-trigger="input changed delay:300ms, search"
+           hx-target=".main-content"
+           hx-select=".main-content"
+           hx-push-url="true">
 </form>
 
 <div class="history-list animate-in" style="animation-delay: 0.1s;">
@@ -29,9 +34,6 @@
                           {% endif %}>
                         {{ song.status }}
                     </span>
-                    {% if song.e_rating %}
-                    <span class="e-rating-badge">{{ song.e_rating }}</span>
-                    {% endif %}
                     <span class="time" style="color:var(--text-subdued); font-size:0.85rem; display:flex; align-items:center; gap:4px;"><i class="ph ph-calendar-blank"></i> {{ song.timestamp|date:"j M Y" }}</span>
                 </div>
                 {% if song.gen_form %}
@@ -47,9 +49,8 @@
             </div>
             
             <div class="history-item-actions" style="display:flex; align-items:center; gap:8px;">
-                <span class="duration" style="color:var(--text-subdued); font-size:0.85rem; display:flex; align-items:center; gap:4px; margin-right: 8px;"><i class="ph ph-clock"></i> 3:45</span>
-                
                 {% if song.status == 'ready' %}
+                <span class="duration" data-audio-url="{{ song.audio_url }}" style="color:var(--text-subdued); font-size:0.85rem; display:flex; align-items:center; gap:4px; margin-right: 8px;"><i class="ph ph-clock"></i> --:--</span>
                 <button class="btn-icon" onclick="selectSong('{{ song.title|escapejs }}', '{{ song.audio_url|escapejs }}')" title="Play">
                     <i class="ph-fill ph-play-circle" style="font-size: 1.5rem; color: var(--accent);"></i>
                 </button>
@@ -214,6 +215,23 @@ function shareSong(url) {
 document.getElementById('editForm').addEventListener('submit', function() {
     document.getElementById('btn-save-regen').textContent = 'Regenerating...';
     document.getElementById('btn-save-regen').disabled = true;
+});
+
+document.querySelectorAll('.history-list .duration').forEach(el => {
+    const url = el.getAttribute('data-audio-url');
+    if (url && url !== 'None' && url !== '') {
+        const audio = new Audio(url);
+        audio.addEventListener('loadedmetadata', () => {
+            if (audio.duration && audio.duration !== Infinity) {
+                const s = audio.duration;
+                const m = Math.floor(s / 60);
+                const sec = Math.floor(s % 60);
+                el.innerHTML = `<i class="ph ph-clock"></i> ${m}:${sec < 10 ? '0' : ''}${sec}`;
+            }
+        });
+    } else {
+        el.innerHTML = `<i class="ph ph-clock"></i> --:--`;
+    }
 });
 </script>
 {% endblock %}
