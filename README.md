@@ -11,13 +11,6 @@
     Interchangeable generation strategies, real-time status tracking, and a premium dark-themed UI.
   </p>
 
-  <p align="center">
-    <img src="https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white" alt="Django" />
-    <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
-    <img src="https://img.shields.io/badge/HTMX-3366CC?style=for-the-badge&logo=htmx&logoColor=white" alt="HTMX" />
-    <img src="https://img.shields.io/badge/Vanilla_CSS-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3" />
-    <img src="https://img.shields.io/badge/Google_OAuth-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google" />
-  </p>
 </div>
 
 <!-- TABLE OF CONTENTS -->
@@ -58,11 +51,12 @@ Key Features:
 
 ### Built With
 
-* [![Django][Django-badge]][Django-url]
-* [![Python][Python-badge]][Python-url]
-* [![HTMX][HTMX-badge]][HTMX-url]
-* [![Google][Google-badge]][Google-url]
-* [![Suno][Suno-badge]][Suno-url]
+[![Django][Django-badge]][Django-url]
+[![Python][Python-badge]][Python-url]
+[![HTMX][HTMX-badge]][HTMX-url]
+[![Vanilla CSS][CSS-badge]][CSS-url]
+[![Google][Google-badge]][Google-url]
+[![Suno][Suno-badge]][Suno-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -77,27 +71,80 @@ Key Features:
 
 ### Installation
 
-1. Clone the repository
-   ```sh
+We highly recommend using a virtual environment to manage dependencies. Follow the instructions for your operating system:
+
+#### 🍎 macOS / Linux
+
+1. **Clone the repository**
+   ```bash
    git clone https://github.com/ucula/SunoSongDjango.git
    cd SunoSongDjango
    ```
-2. Set up environment variables
-   ```sh
-   cp .env.example .env
+2. **Create and activate a virtual environment**
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
    ```
-   Edit `.env` and provide your credentials:
-   * **Suno API**: `SUNO_API_KEY`
-   * **Google OAuth**: `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, and `GOOGLE_OAUTH_REDIRECT_URI` (ensure this URI is also authorized in your [Google Cloud Console](https://console.cloud.google.com/)).
-3. Install dependencies
-   ```sh
+3. **Install dependencies**
+   ```bash
    pip install -r requirements.txt
    ```
-4. Run migrations and start server
-   ```sh
+4. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   ```
+   *See the **Configuration** section below to set up your `.env` file.*
+5. **Run migrations and start the server**
+   ```bash
    python manage.py migrate
    python manage.py runserver
    ```
+
+#### 🪟 Windows
+
+1. **Clone the repository**
+   ```powershell
+   git clone https://github.com/ucula/SunoSongDjango.git
+   cd SunoSongDjango
+   ```
+2. **Create and activate a virtual environment**
+   ```powershell
+   python -m venv venv
+   .\venv\Scripts\activate
+   ```
+3. **Install dependencies**
+   ```powershell
+   pip install -r requirements.txt
+   ```
+4. **Set up environment variables**
+   ```powershell
+   copy .env.example .env
+   ```
+   *See the **Configuration** section below to set up your `.env` file.*
+5. **Run migrations and start the server**
+   ```powershell
+   python manage.py migrate
+   python manage.py runserver
+   ```
+
+### Configuration
+
+Open the newly created `.env` file in your editor and provide the following required keys:
+
+**1. Suno API:**
+* `SUNO_API_KEY`: Get this from your [api.sunoapi.org](https://api.sunoapi.org) account.
+
+**2. Google OAuth:**
+To enable user authentication, you must configure a Google Cloud project:
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2. Create a new project and navigate to **APIs & Services > Credentials**.
+3. Click **Create Credentials** -> **OAuth client ID**.
+4. Set the Application type to **Web application**.
+5. Add your authorized redirect URIs (e.g., `http://localhost:8000/oauth/callback/google/`).
+6. Copy the generated keys into your `.env` file:
+   * `GOOGLE_OAUTH_CLIENT_ID`
+   * `GOOGLE_OAUTH_CLIENT_SECRET`
+   * `GOOGLE_OAUTH_REDIRECT_URI`
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -145,6 +192,8 @@ SUCCESS: Suno generation completed.
 [Python-url]: https://www.python.org/
 [HTMX-badge]: https://img.shields.io/badge/HTMX-3366CC?style=for-the-badge&logo=htmx&logoColor=white
 [HTMX-url]: https://htmx.org/
+[CSS-badge]: https://img.shields.io/badge/Vanilla_CSS-1572B6?style=for-the-badge&logo=css3&logoColor=white
+[CSS-url]: https://developer.mozilla.org/en-US/docs/Web/CSS
 [Suno-badge]: https://img.shields.io/badge/Suno_API-FF6B6B?style=for-the-badge&logo=music&logoColor=white
 [Suno-url]: https://api.sunoapi.org
 [Google-badge]: https://img.shields.io/badge/Google_OAuth-4285F4?style=for-the-badge&logo=google&logoColor=white
