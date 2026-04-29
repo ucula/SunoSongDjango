@@ -155,6 +155,20 @@ The generation flow uses the Strategy Pattern to allow interchangeable generatio
 * **mock**: Deterministic, offline generator for local development.
 * **suno**: External API-backed generator using the Suno AI service.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Architecture Diagrams
+
+### Domain Model
+
+![Domain Model Diagram](Domain_diagram.jpg)
+
+### Song Generation Sequence Diagram
+
+![Song Generation Sequence](Song_usecase_sequence.png)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ### 3. Evidence of Usage
 
 #### How to run Mock Mode
