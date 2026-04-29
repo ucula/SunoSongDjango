@@ -167,6 +167,10 @@ The generation flow uses the Strategy Pattern to allow interchangeable generatio
 
 ![Song Generation Sequence](Song_usecase_sequence.png)
 
+### MVT Class Diagram
+
+![MVT Class Diagram](Class_Diagram.png)
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### 3. Evidence of Usage
